@@ -11,6 +11,7 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage[version=4]{mhchem}
+\usepackage{siunitx}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
 T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -85,6 +86,48 @@ The Internal Combustion Engine is the backbone of modern society. Rapid adoption
 The chemical reaction of igniting fossil fuels in the presence of air under high temperature and high pressure releases
 significant quantities of greenhouse gases responsible for global warming such as nitrogen oxides (\ce{NO_x}), carbon
 dioxide (\ce{CO2}), carbon monoxide (\ce{CO}) and sulphur dioxide (\ce{SO2}).
+
+The effectiveness of manual calibration of ICE systems is inherently limited by the thermodynamics of the combustion
+process \cite{weteringArtificialNeuralNetworkBased2023}. An ideal optimization goal of IC Engines is to lower \ce{NO_x}
+and \ce{CO2} emissions as a byproduct of igniting an air-fuel mixture at high temperatures. While high operating
+temperatures govern a near-complete combustion process, they also favours the thermal decomposition of nitrogen dioxide
+\ce{NO2} to produce toxic nitrogen monoxide (\ce{NO}).
+
+\ce{NO2} is known to thermally decompose from \SI{150}{\degreeCelsius} at atmospheric pressure
+\cite{nitrogenDioxideThermalDecomposition},
+
+\begin{equation}
+	\ce{2NO2(g) ->[\SI{150}{\degreeCelsius}][1 a.t.m] 2NO(g) + O2(g)} \label{eq:no2tono}
+\end{equation}
+
+At high temperatures, the combustion process in the absence of nitrogen gas (\ce{N2}) produces \ce{CO2} and \ce{H2O} as
+the byproduct,
+
+\begin{equation}
+	\ce{C_xH_y + ($x+\frac{y}{4}$)O2 ->[\Delta] xCO2 + $\frac{y}{2}$H2O + Energy}
+\end{equation}
+
+Increasing operating temperature has an inverse effect on \ce{NO_x} and \ce{CO2}. Higher temperatures demand less fuel
+overall to provide the same kinetic energy, lowering \ce{CO2} emissions. However, it increases \ce{NO_x} emissions since
+high temperatures favours the binding of oxygen atoms (\ce{O}) to nitrogen atoms (\ce{N}),
+
+\begin{equation}
+	\ce{N2(g) + 2O2(g) ->[\Delta][1 a.t.m] 2NO2(g)}
+\end{equation}
+
+A general relationship between \ce{NO_x} and \ce{CO2} can be modelled as:
+
+\begin{equation}
+	[\ce{NO_x}] \propto \frac{T\textsuperscript{a}}{[\ce{CO2}]} \label{eq:noxandco2rel}
+\end{equation}
+where:
+\begin{itemize}
+	\item $[\ce{NO_x}]$ is the concentration of \ce{NO_x},
+	\item $[\ce{CO2}]$ is the concentration of \ce{CO2},
+	\item $T$ is temperature, and
+	\item $a$ is some coefficient of $T$.
+
+\end{itemize}
 
 \section{Prepare Your Paper Before Styling}
 Before you begin to format your paper, first write and save the content as a
@@ -313,6 +356,8 @@ element symbols.
 For papers published in translation journals, please give the English
 citation first, followed by the original foreign-language citation \cite{b6}.
 
+\bibliographystyle{IEEEtran}
+\bibliography{ref/literature-review,ref/nox,ref/co2}
 \begin{thebibliography}{00}
 \bibitem{b1} G. Eason, B. Noble, and I. N. Sneddon, ``On certain
 integrals of Lipschitz-Hankel type involving products of Bessel
