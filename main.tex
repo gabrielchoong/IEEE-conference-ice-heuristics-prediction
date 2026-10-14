@@ -7,6 +7,7 @@
 \hbadness=10000
 
 \usepackage{cite}
+\usepackage{url}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithm}
 \usepackage{algorithmic}
@@ -290,7 +291,9 @@ $\mathbf{x} \in \mathbf{\Omega}$ dynamically parameterizes both network capacity
 During Stage-1 search, each candidate agent is trained under the restricted proxy budget using
 standard Mean Squared Error (MSE) loss. The resulting validation performance is mapped to a
 minimization objective $f(\mathbf{x}) = 1 - R^2$. Population positions are then updated via the
-respective metaheuristic operator $\mathcal{M}$ (ACOR, AIW-PSO, Original HHO, or Dev-SCA). Once the
+respective metaheuristic operator $\mathcal{M}$ (ACOR, AIW-PSO, Original HHO, or Dev-SCA). The metaheuristic
+algorithms and candidate parameter spaces were implemented using the open-source MEALPY
+framework~\cite{van2023mealpy,van2023groundwater,ahmed2021comprehensive}. Once the
 population converges, Stage-2 extracts the global optimal parameter set $\mathbf{x}^*$ and
 benchmarks test generalization against the manual baseline model.
 
@@ -482,7 +485,8 @@ for $\ce{CO2}$ in under 20 epochs.
 The performance of the two models on the target variables were evaluated using equations obtained in
 Sections~\ref{sec:co(-_2-)-modelling} and~\ref{sec:nox-modelling}. The ANN-HHO model demonstrated effective
 hyperparameter optimisation, resulting in a high performance regression model. It is important to note that the dataset
-used in this study is based on open-source vehicle telemetry data and does not include actual sensor readings for either
+used in this study is based on open-source OBD-II vehicle telemetry data~\cite{cephasax_obdii_ds3}
+and does not include actual sensor readings for either
 $ NO_x $ or $ CO_2 $. Instead, both target variables were derived using mathematical models applied to OBD-II data.
 The observed performance improvements might vary accordingly on the nature and quality of the data being used. The lack
 of direct sensor measurements introduces a key limitation in the validity of the regression results. While modelled
@@ -531,51 +535,27 @@ interpreted with the understanding that both $ CO_2 $ and $ NO_x $ values are, a
 approximations. Future work involving actual sensor data would allow for a more comprehensive validation of the methods
 applied in this study and help eliminate ambiguities caused by the limitations of synthetic target generation.
 
-\section{Conclusion}
+\section{Conclusion and Future Works}
 
-This study developed a predictive neural surrogate framework for internal combustion engine
-emissions and systematically benchmarked metaheuristic hyperparameter optimization strategies
-against conventional manual calibration. The empirical results demonstrate that metaheuristic
-algorithms consistently discover architectures that outperform manual baseline models in both
-predictive accuracy and computational training efficiency.
+This study demonstrated that pairing artificial neural networks with metaheuristic optimization
+(ANN-HHO) delivers high-fidelity surrogate modeling for internal combustion engine emissions while
+eliminating manual trial-and-error bottlenecks. Under compute-restricted proxy evaluations ($\le 20$
+epochs), metaheuristically discovered architectures converged on robust, shallow-wide topologies (two
+layers, $\ge 138$ units), decisively preventing the scheduler-induced overfitting that degraded the
+manual baseline ($R^2 = 0.5714 \pm 0.2240$). Specifically, HHO-UR attained top $\ce{NO_x}$ fidelity
+($R^2 = 0.9823$), while HHO-R achieved an $88.7\%$ reduction in training epochs (17 versus 150) and
+reduced search runtime down to 76 minutes. ACOR and AIW-PSO further validated the Pareto efficiency of
+the continuous metaheuristic search space.
 
-In particular, the metaheuristic-optimised models demonstrated remarkable predictive fidelity and
-computational economy. Under the restricted proxy budget ($\le 20$ epochs), ACOR achieved the
-highest overall generalization performance, attaining an $R^2$ score of $0.9791$ for $\ce{NO_x}$
-and $0.9956$ for $\ce{CO2}$ with a test loss of $454.51$, compared to $0.5714 \pm 0.2240$ and
-$0.9992 \pm 0.0002$ from the manual baseline model. AIW-PSO provided a balanced Pareto optimum,
-delivering an $R^2$ of $0.9691$ for $\ce{NO_x}$ in just $57.0$ minutes of search time. Furthermore,
-HHO-R confirmed that an $88.7\%$ reduction in training epochs (17 versus 150) maintains robust
-predictive accuracy ($R^2 = 0.9327$) while slashing search wall-clock duration from over 9 hours to
-76 minutes. These findings validate the Two-Stage NAS proxy hypothesis, demonstrating that
-restricted proxy evaluations successfully resolve manual trial-and-error calibration bottlenecks and eliminate
-scheduler-induced overfitting on non-linear emission dynamics.
+Future research will focus on deploying the ANN-HHO surrogate onto physical Engine Control Unit (ECU)
+hardware to evaluate real-time inference latency and closed-loop control dynamics. In addition,
+integrating physical transient $\ce{NO_x}$ and $\ce{CO2}$ sensor measurements will replace proxy
+telemetry equations, enabling direct calibration across diverse vehicle powertrains.
 
-While the methodology proved effective, this work is limited by the lack of access to real-world engine sensor data.
-Both $ CO2 $ and $ NOx $ emissions were predicted based on derived values from OBD-II telemetry, which introduces
-uncertainty and limits the real-world applicability of the results. Furthermore, time constraints and hardware
-limitations prevented the deployment or simulation of the model in a real-time embedded system or live ECU environment.
-
-Nonetheless, this research lays the groundwork for a potentially transformative application: the replacement of
-conventional rule-based ECU with adaptive, machine-learning-driven alternatives. The ANN-HHO framework developed in this
-study offers a promising foundation for creating intelligent ECU modules that can self-optimise for various operating
-conditions and engine configurations. This direction not only bridges predictive modeling with real-time automotive
-control, but also opens up new possibilities for scalable, fuel-efficient, and emissions-conscious engine management
-systems.
-
-\subsection{Future Works}
-
-Future development will focus on advancing this research toward real-world implementation. This includes integrating the
-ANN-HHO model into a real-time Engine Control Unit (ECU) system to replace traditional rule-based algorithms with
-adaptive, data-driven control logic. Acquiring sensor-based emission datasets would also allow for more rigorous
-validation and fine-tuning of the model.
-
-Additionally, while the proposed method has shown generalisability across engine types, performance could be further
-improved by tailoring training datasets to specific engine configurations, similar to how commercial ECUs are tuned
-individually per vehicle. The flexibility of the ANN-HHO pipeline makes it a strong candidate for scalable deployment,
-provided engine-specific data is available for model training and evaluation. The long-term goal is to refine this model
-into a robust, general-purpose optimisation layer that can be embedded into existing vehicle systems to enhance fuel
-efficiency and reduce emissions dynamically.
+\subsection{Data and Code Availability}
+The OBD-II telemetry driving logs analyzed in this study are openly accessible via~\cite{cephasax_obdii_ds3}.
+To facilitate reproducibility, the complete neural architecture search pipeline, baseline calibration
+routines, and trained surrogate models will be made publicly available upon conference publication.
 
 \bibliographystyle{IEEEtran}
 \bibliography{ref/references,ref/nox,ref/co2}
