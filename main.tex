@@ -99,46 +99,15 @@ significant quantities of greenhouse gases responsible for global warming such a
 dioxide ($\ce{CO2}$), carbon monoxide ($\ce{CO}$) and sulphur dioxide ($\ce{SO2}$).
 
 The effectiveness of manual calibration of ICE systems is inherently limited by the thermodynamics of the combustion
-process \cite{weteringArtificialNeuralNetworkBased2023}. An ideal optimization goal of IC Engines is to lower
-$\ce{NO_x}$ and $\ce{CO2}$ emissions as a byproduct of igniting an air-fuel mixture at high temperatures. While high
-operating temperatures govern a near-complete combustion process, they also favours the thermal decomposition of
-nitrogen dioxide $\ce{NO2}$ to produce toxic nitrogen monoxide ($\ce{NO}$).
-
-$\ce{NO2}$ is known to thermally decompose from \SI{150}{\degreeCelsius} at atmospheric pressure
-\cite{nitrogenDioxideThermalDecomposition},
-
-\begin{equation}
-	\ce{2NO2(g) ->[\SI{150}{\degreeCelsius}][1 a.t.m] 2NO(g) + O2(g)}\label{eq:no2tono}
-\end{equation}
-
-At high temperatures, the combustion process in the absence of nitrogen gas (\ce{N2}) produces \ce{CO2} and \ce{H2O} as
-the byproduct,
-
-\begin{equation}
-	\ce{C_xH_y + ($x+\frac{y}{4}$)O2 ->[\Delta] xCO2 + $\frac{y}{2}$H2O + Energy}\label{eq:gencom}
-\end{equation}
-
-Increasing operating temperature has an inverse effect on $\ce{NO_x}$ and $\ce{CO2}$. Higher temperatures demand less
-fuel overall to provide the same kinetic energy, lowering $\ce{CO2}$ emissions. However, it increases $\ce{NO_x}$
-emissions since high temperatures favours the binding of oxygen atoms ($\ce{O}$) to nitrogen atoms ($\ce{N}$),
-
-\begin{equation}
-	\ce{N2(g) + 2O2(g) ->[\Delta][1 a.t.m] 2NO2(g)}\label{eq:no2formation}
-\end{equation}
-
-A general relationship between $\ce{NO_x}$ and $\ce{CO2}$ can be modelled as:
-
-\begin{equation}
-	[\ce{NO_x}] \propto \frac{T\textsuperscript{a}}{[\ce{CO2}]} \label{eq:noxandco2rel}
-\end{equation}
-where:
-\begin{itemize}
-	\item $[\ce{NO_x}]$ is the concentration of $\ce{NO_x}$,
-	\item $[\ce{CO2}]$ is the concentration of $\ce{CO2}$,
-	\item $T$ is temperature, and
-	\item $a$ is some coefficient of $T$.
-
-\end{itemize}
+process \cite{weteringArtificialNeuralNetworkBased2023}. An ideal optimization objective in engine management is the
+simultaneous minimization of both $\ce{NO_x}$ and $\ce{CO2}$ emissions resulting from hydrocarbon combustion. However,
+these two target pollutants exhibit a fundamental thermodynamic Pareto trade-off governed by in-cylinder operating
+temperatures. Higher combustion temperatures promote more complete fuel oxidation, thereby maximizing thermal efficiency
+and reducing specific fuel consumption alongside $\ce{CO2}$ emissions. Conversely, these elevated temperatures provide
+the activation energy required for the thermal fixation of atmospheric nitrogen into nitrogen oxides ($\ce{NO_x}$) via
+the Zeldovich mechanism, while accelerating the thermal decomposition of nitrogen dioxide ($\ce{NO2}$) into toxic
+nitrogen monoxide ($\ce{NO}$) \cite{nitrogenDioxideThermalDecomposition}. This opposing physical relationship makes
+concurrent emission reduction highly non-linear and difficult to navigate through traditional heuristics.
 
 Manual calibration of the thermodynamics of an IC Engine remain costly and time consuming. Machine learning (ML) methods
 such as artificial neural networks (ANN) offer a powerful alternative to map out the relationships of several crucial
@@ -194,9 +163,16 @@ From \eqref{eqn:no-rate},
 \end{equation}
 
 Under high temperatures, thermal equilibrium favours the formation of $\ce{NO}$ due to the thermal decomposition of
-$\ce{NO_2}$ as denoted in \eqref{eq:no2tono}. When exhaust gases escape the combustion chamber, heat is
-released and the equilibrium shifts towards $\ce{NO_2}$. Nitrogen Oxides are denoted by $\ce{NO_x}$ in
-\eqref{eqn:nox-integral}.
+nitrogen dioxide ($\ce{NO_2}$), which initiates from \SI{150}{\degreeCelsius} at atmospheric pressure
+\cite{nitrogenDioxideThermalDecomposition}:
+
+\begin{equation}
+	\ce{2NO2(g) ->[\SI{150}{\degreeCelsius}][1 a.t.m] 2NO(g) + O2(g)}\label{eq:no2tono}
+\end{equation}
+
+When exhaust gases escape the combustion chamber into lower-temperature exhaust manifolds, thermal energy is released
+and the chemical equilibrium shifts back towards $\ce{NO_2}$. In this modeling framework, the collective mixture of
+these oxides is denoted by $\ce{NO_x}$ in \eqref{eqn:nox-integral}.
 
 To achieve a suitable approximation, $\ce{NO_x}$ emissions are approximated using the equation below
 
