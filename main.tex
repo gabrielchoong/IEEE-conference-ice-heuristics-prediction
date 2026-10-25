@@ -20,7 +20,7 @@
 T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{A hybrid ANN-HHO approach for ICE Emission Data Modelling*\\
+\title{A hybrid ANN-HHO approach for ICE Emission Data Modelling\\
 	% {\footnotesize \textsuperscript{*}Note: Sub-titles are not captured
 	% 	for https://ieeexplore.ieee.org  and
 	% should not be used}
@@ -69,10 +69,9 @@ T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{abstract}
 	Road transportation remains a primary contributor to global greenhouse gas emissions, where
 	thermodynamic limits inherent to Internal Combustion Engines (ICE) constrain efficiency and
-	complicate manual engine calibration. While artificial neural networks provide promising surrogate
-	modeling capabilities, conventional manual architectures trained over exhaustive horizons
-	frequently suffer from trial-and-error bottlenecks and scheduler-induced overfitting on complex
-	non-linear emissions. In this study, we propose a hybrid Artificial Neural Network and Harris
+	complicate manual engine calibration. Although artificial neural networks can map non-linear
+	engine emissions, manual architecture design remains a costly trial-and-error process prone
+	to severe overfitting. In this study, we propose a hybrid Artificial Neural Network and Harris
 	Hawks Optimization (ANN-HHO) framework for multi-target vehicle emission modeling, predicting
 	mathematically estimated $\ce{NO_x}$ and $\ce{CO2}$ from OBD-II vehicle telemetry. The proposed
 	framework simultaneously optimizes network topology and training hyperparameters under both
@@ -82,7 +81,7 @@ T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 	in the manual baseline model ($R^2 = 0.5714 \pm 0.2240$). Furthermore, under a restricted
 	budget ($\le 20$ epochs), restricted HHO (HHO-R) attains an $88.7\%$ reduction in training epochs
 	(17 vs. 150) with an $R^2$ of $0.9327$, cutting search wall-clock duration from 9.1 hours to 76
-	minutes. Comparative evaluation against alternative metaheuristics (PSO, ACO, and SCA) confirms
+	minutes. Comparative evaluation against alternative metaheuristics (PSO, ACOR, and SCA) confirms
 	that the HHO framework consistently discovers compact, generalizable two-layer topologies,
 	demonstrating a scalable and computationally efficient methodology for intelligent automotive engine management.
 \end{abstract}
@@ -281,8 +280,8 @@ The predictive performance and computational efficiency of the neural architectu
 across all four metaheuristic algorithms, namely Ant Colony Optimization for Continuous Domains (ACOR),
 Adaptive Inertia Weight Particle Swarm Optimization (AIW-PSO), Harris Hawks Optimization (HHO), and
 the Sine Cosine Algorithm (SCA), were comprehensively evaluated against the manual baseline model.
-Table~\ref{tab:master_benchmark} summarizes the terminal test set generalisation metrics,
-architectural topologies, and computational search overheads across all evaluated configurations.
+Table~\ref{tab:master_benchmark} reports the test metrics, discovered topologies, and search
+overhead across all evaluated models.
 
 \begin{table*}[t]
 	\centering
@@ -301,7 +300,7 @@ architectural topologies, and computational search overheads across all evaluate
 			\textbf{SCA} & $[94, 202]$ (2 layers) & \textbf{15} & RMSprop & 1188.31 & 0.8988 & 0.9884 & \textbf{48.5 min} \\
 			\textbf{HHO-R (Restricted)} & $[138, 256]$ (2 layers) & \textbf{17} & Nadam & 678.81 & 0.9327 & 0.9934 & 76.1 min \\
 			\textbf{PSO} & $[242, 125]$ (2 layers) & \textbf{20} & Nadam & 572.74 & 0.9691 & 0.9944 & \textbf{57.0 min} \\
-			\textbf{ACO (Best Accuracy)} & $[205, 256]$ (2 layers) & \textbf{20} & Adam & \textbf{454.51} &
+			\textbf{ACOR (Best Accuracy)} & $[205, 256]$ (2 layers) & \textbf{20} & Adam & \textbf{454.51} &
 			\textbf{0.9791} & 0.9956 & 101.7 min \\
 			\textbf{HHO-UR (Unrestricted)} & $[175, 211, 220, 242, 21]$ (5 layers) & 150 & RMSprop & 514.35 &
 			\textbf{0.9823} & 0.9950 & 543.8 min (9.1h) \\
@@ -310,12 +309,11 @@ architectural topologies, and computational search overheads across all evaluate
 	}
 \end{table*}
 
-In the restricted compute regime ($E_{\text{proxy}} \le 20$ epochs), metaheuristic optimisation
-yielded substantial improvements in predictive accuracy over the manual baseline model,
-particularly on the highly non-linear $\ce{NO_x}$ emission manifold. As detailed in
-Table~\ref{tab:master_benchmark}, ACOR achieved the highest overall test accuracy, attaining a test
-MSE loss of $454.51$, an $R^2$ score of $0.9791$ for $\ce{NO_x}$, and $0.9956$ for $\ce{CO2}$
-within only 20 training epochs. AIW-PSO demonstrated similarly robust generalisation, yielding an
+For $E_{\text{proxy}} \le 20$ epochs, metaheuristic optimisation yielded consistent improvements in $R^2$ over the
+manual baseline model, which struggled over the non-linear $\ce{NO_x}$ computed emission data. As shown in
+Table~\ref{tab:master_benchmark},
+ACOR achived the lowest MSE loss of $454.51$ and an $R^2$ score of $0.9791$ for $\ce{NO_x}$, and $0.9956$ for $\ce{CO2}$
+in only 20 epochs. AIW-PSO demonstrated similarly robust generalisation, yielding an
 $R^2$ of $0.9691$ for $\ce{NO_x}$ and $0.9944$ for $\ce{CO2}$ with a test loss of $572.74$, while
 completing its Stage-1 search in the shortest duration among high-performing variants ($57.0$
 minutes). Restricted HHO (HHO-R) converged at 17 epochs with an $R^2$ of $0.9327$ for $\ce{NO_x}$
@@ -334,7 +332,7 @@ $\ce{CO2}$ in only 15 epochs.
 			\textbf{Algorithm} & \textbf{Best Topology} & \textbf{Epochs} & \textbf{Search $R^2$ (\%)} &
 			\textbf{Search Time} \\
 			\hline
-			ACO & $[205, 256]$ (2 layers) & 20 & \textbf{89.21\%} & 101.7 min \\
+			ACOR & $[205, 256]$ (2 layers) & 20 & \textbf{89.21\%} & 101.7 min \\
 			PSO & $[242, 125]$ (2 layers) & 20 & 88.95\% & \textbf{57.0 min} \\
 			HHO & $[138, 256]$ (2 layers) & 17 & 88.91\% & 76.1 min \\
 			SCA & $[94, 202]$ (2 layers) & 15 & 82.28\% & \textbf{48.5 min} \\
@@ -356,8 +354,8 @@ of these accuracy gains and computational trade-offs.
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.45\textwidth]{images/comparative_performance_chart.png}
-	\caption{Comparative performance of baseline vs. metaheuristic models on $\ce{NO_x}$ and
-	$\ce{CO2}$ test sets alongside training epoch requirements.}
+	\caption{Performance and epoch requirements for the baseline vs. metaheuristic models on $\ce{NO_x}$ and
+	$\ce{CO2}$.}
 	\label{fig:comparative_performance}
 \end{figure}
 
@@ -430,8 +428,7 @@ optimization are largely superfluous.
 
 \subsection{Architectural Convergence and Overfitting Analysis}
 
-A key empirical finding of this benchmark is the consistent architectural convergence exhibited by
-the metaheuristic optimisers. Despite the unbounded search space permitting topologies between 1
+Despite the unbounded search space permitting topologies between 1
 and 5 hidden layers, all four restricted algorithms independently converged on shallow, wide
 configurations consisting of exactly two hidden layers ($[205, 256]$ for ACOR, $[242, 125]$ for
 PSO, $[138, 256]$ for HHO, and $[94, 202]$ for SCA). The widened first hidden layer ($> 94$ units,
