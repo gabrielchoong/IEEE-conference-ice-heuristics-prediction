@@ -516,13 +516,13 @@ epochs), metaheuristically discovered architectures converged on robust, shallow
 layers, $\ge 138$ units), decisively preventing the scheduler-induced overfitting that degraded the
 manual baseline ($R^2 = 0.5714 \pm 0.2240$). Specifically, HHO-UR attained top $\ce{NO_x}$ fidelity
 ($R^2 = 0.9823$), while HHO-R achieved an $88.7\%$ reduction in training epochs (17 versus 150) and
-reduced search runtime down to 76 minutes. ACOR and AIW-PSO further validated the Pareto efficiency of
-the continuous metaheuristic search space.
+reduced search runtime down to 76 minutes.
 
-Future research will focus on deploying the ANN-HHO surrogate onto physical Engine Control Unit (ECU)
-hardware to evaluate real-time inference latency and closed-loop control dynamics. In addition,
-integrating physical transient $\ce{NO_x}$ and $\ce{CO2}$ sensor measurements will replace proxy
-telemetry equations, enabling direct calibration across diverse vehicle powertrains.
+Further research can experiment on adapting the ANN-HHO model in the Engine Control Unit (ECU)
+hardware algorithm design. Applications of the proposed methodology shall not only be limited to
+emission reduction, but also the inclusion of other design goals such as closing the gap between the
+theoretical and actual maximum power extraction, or engineering challenges of the current ICE
+landscape.
 
 \subsection{Data and Code Availability}
 The OBD-II telemetry driving logs analyzed in this study are openly accessible via~\cite{cephasax_obdii_ds3}.
