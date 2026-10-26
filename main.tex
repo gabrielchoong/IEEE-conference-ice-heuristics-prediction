@@ -299,9 +299,9 @@ overhead across all evaluated models.
 			$0.5714 \pm 0.224$ & \textbf{0.9992} $\pm$ 0.0002 & N/A \\
 			\textbf{SCA} & $[94, 202]$ (2 layers) & \textbf{15} & RMSprop & 1188.31 & 0.8988 & 0.9884 & \textbf{48.5 min} \\
 			\textbf{HHO-R (Restricted)} & $[138, 256]$ (2 layers) & \textbf{17} & Nadam & 678.81 & 0.9327 & 0.9934 & 76.1 min \\
-			\textbf{PSO} & $[242, 125]$ (2 layers) & \textbf{20} & Nadam & 572.74 & 0.9691 & 0.9944 & \textbf{57.0 min} \\
-			\textbf{ACOR (Best Accuracy)} & $[205, 256]$ (2 layers) & \textbf{20} & Adam & \textbf{454.51} &
-			\textbf{0.9791} & 0.9956 & 101.7 min \\
+			\textbf{PSO} & $[242, 125]$ (2 layers) & \textbf{20} & Nadam & 1214.30 & 0.9817 & 0.9882 & \textbf{57.0 min} \\
+			\textbf{ACOR (Lowest Loss)} & $[205, 256]$ (2 layers) & \textbf{20} & Adam & \textbf{590.71} &
+			0.9793 & 0.9942 & 101.7 min \\
 			\textbf{HHO-UR (Unrestricted)} & $[175, 211, 220, 242, 21]$ (5 layers) & 150 & RMSprop & 514.35 &
 			\textbf{0.9823} & 0.9950 & 543.8 min (9.1h) \\
 			\hline
@@ -312,12 +312,14 @@ overhead across all evaluated models.
 For $E_{\text{proxy}} \le 20$ epochs, metaheuristic optimisation yielded consistent improvements in $R^2$ over the
 manual baseline model, which struggled over the non-linear $\ce{NO_x}$ computed emission data. As shown in
 Table~\ref{tab:master_benchmark},
-ACOR achived the lowest MSE loss of $454.51$ and an $R^2$ score of $0.9791$ for $\ce{NO_x}$, and $0.9956$ for $\ce{CO2}$
-in only 20 epochs. AIW-PSO demonstrated similarly robust generalisation, yielding an
-$R^2$ of $0.9691$ for $\ce{NO_x}$ and $0.9944$ for $\ce{CO2}$ with a test loss of $572.74$, while
+ACOR achieved the lowest test MSE loss of $590.71$ alongside an $R^2$ score of $0.9793$ for
+$\ce{NO_x}$ and $0.9942$ for $\ce{CO2}$
+in only 20 epochs. AIW-PSO demonstrated strong predictive fidelity, yielding an
+$R^2$ of $0.9817$ for $\ce{NO_x}$ and $0.9882$ for $\ce{CO2}$ with a test loss of $1214.30$, while
 completing its Stage-1 search in the shortest duration among high-performing variants ($57.0$
 minutes). Restricted HHO (HHO-R) converged at 17 epochs with an $R^2$ of $0.9327$ for $\ce{NO_x}$
-and $0.9934$ for $\ce{CO2}$ in $76.1$ minutes. Even SCA, the most computationally lightweight
+and $0.9934$ for $\ce{CO2}$ with a test loss of $678.81$ in $76.1$ minutes. Even SCA, the most
+computationally lightweight
 optimiser ($48.5$ minutes search), achieved an $R^2$ of $0.8988$ for $\ce{NO_x}$ and $0.9884$ for
 $\ce{CO2}$ in only 15 epochs.
 
@@ -359,26 +361,23 @@ of these accuracy gains and computational trade-offs.
 	\label{fig:comparative_performance}
 \end{figure}
 
-Crucially, Table~\ref{tab:metaheuristic_benchmark} demonstrates complete monotonic rank
-preservation between the Stage-1 proxy fitness scores ($1 - R^2$) and the final Stage-2 test evaluations:
+Table~\ref{tab:metaheuristic_benchmark} shows that the ranking of the algorithms remain identical between the Stage-1
+proxy search ($1 - R^2$) and the Stage-2 evaluation:
 \begin{equation}
 	\text{ACOR} \succ \text{PSO} \succ \text{HHO-R} \succ \text{SCA} \gg \text{Manual Baseline}.
 \end{equation}
-This confirms the validity of the Two-Stage NAS proxy hypothesis: a constrained training budget of
-$\le 20$ epochs provides an effective surrogate gradient landscape that reliably differentiates
-high-performing neural configurations without incurring the prohibitive costs of full-horizon
-training during search iterations.
+This confirms that a short $\le 20$ epoch training constraint reliably identifies the best architectures without wasting
+compute on 150 epochs during search.
 
 \subsection{Convergence Dynamics and Compute Budget Savings}
 
-Figure~\ref{fig:loss_convergence_comparison} delineates the training loss convergence trajectories
-across the evaluated regimes. In Figure~\ref{fig:loss_convergence_comparison}(a), the logarithmic
-convergence curves illustrate the rapid error reduction achieved by the metaheuristic-optimised
-models within the restricted 20-epoch budget. All four algorithms drive the training MSE loss from
-initial values exceeding $35,000$ down into the sub-$1,000$ domain in fewer than 15 epochs. ACOR
-demonstrates the steepest initial descent, descending below $2,000$ loss by Epoch 6 due to the
-frequent stochastic weight updates afforded by its smaller mini-batch size ($B = 16$). Meanwhile,
-PSO achieves the lowest terminal training loss among the restricted variants ($568.05$ at Epoch 20).
+Figure~\ref{fig:loss_convergence_comparison} shows the training loss convergence trend for the
+optimization algorithms. In Figure~\ref{fig:loss_convergence_comparison}(a), rapid error reduction
+is observed for all metaheuristic algorithms within the 20 epoch limit. The final losses settled
+just below the $1000$ mark around the 15\textsuperscript{th} epoch. ACOR showed the steepest initial
+descent to under $2000$ by the 6\textsuperscript{th} epoch due to its smaller mini-batch size ($B =
+16$) and frequent stochastic weight updates. PSO achieved the lowest training loss among epoch
+limited training at $568$ by epoch 20.
 
 \begin{figure*}[t]
 	\centering
