@@ -87,7 +87,8 @@ T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \end{abstract}
 
 \begin{IEEEkeywords}
-	component, formatting, style, styling, insert.
+	Internal combustion engines, vehicle emission modeling, multi-target prediction, artificial neural networks,
+	Harris Hawks optimization, OBD-II telemetry.
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -129,12 +130,14 @@ optimization algorithms to design a mathematically optimal network architecture
 application of optimization algorithms on ANNs demonstrated a better performance overall for training a model on IC
 Engine telemetry \cite{gunawanApplicationArtificialNeural2024} when compared to manual-tuned ANNs.
 
-Metaheuristic optimization techniques, particularly nature-inspired algorithms such as the Harris Hawks Optimization
-(HHO) have proven to be superior in engineering design \cite{heidariHarrisHawksOptimization2019}. It utilizes a smart
-search strategy mirroring the pack hunting of Harris Hawks to find a near optimal approximation solution. Furthermore,
-recent studies noted the application of machine learning based low level control for the Engine Control Unit (ECU)
-\cite{omranDeepReinforcementLearning2024}. Together, these studies highlight promising methodologies to be tested and
-applied to ICE system optimizations.
+Nature-inspired swarm heuristics reliably navigate non-convex engineering landscapes.
+Specifically, Harris Hawks Optimization (HHO)~\cite{heidariHarrisHawksOptimization2019} alternates
+between exploratory perching and Levy-flight-driven dives to satisfy sensor coverage and sink-node
+routing constraints in industrial networks~\cite{abdulrab2022optimal, abdulrab2022hho}.
+At the powertrain layer, reinforcement learning policies have proven effective for non-linear Engine
+Control Unit (ECU) calibration~\cite{omranDeepReinforcementLearning2024}.
+Applying similar population-based exploration enables neural surrogate models to approximate
+rugged internal combustion engine emission data without trapped trajectories in poor local minima.
 
 \section{Proposed Methodology}
 
@@ -263,14 +266,16 @@ $\mathbf{x} \in \mathbf{\Omega}$ dynamically parameterizes both network capacity
 \text{Sigmoid}\}$) and the gradient descent dynamics (optimizer $\mathcal{O}$, batch size $B \in
 [16, 64]$, and proxy epoch budget $E_{\text{proxy}} \le 20$).
 
-During Stage-1 search, each candidate agent is trained under the restricted proxy budget using
-standard Mean Squared Error (MSE) loss. The resulting validation performance is mapped to a
-minimization objective $f(\mathbf{x}) = 1 - R^2$. Population positions are then updated via the
-respective metaheuristic operator $\mathcal{M}$ (ACOR, AIW-PSO, Original HHO, or Dev-SCA). The metaheuristic
-algorithms and candidate parameter spaces were implemented using the open-source MEALPY
-framework~\cite{van2023mealpy,van2023groundwater,ahmed2021comprehensive}. Once the
-population converges, Stage-2 extracts the global optimal parameter set $\mathbf{x}^*$ and
-benchmarks test generalization against the manual baseline model.
+During Stage-1 search, candidate architectures train under a restricted proxy budget using standard
+Mean Squared Error (MSE) loss, mapping validation performance to the minimization objective
+$f(\mathbf{x}) = 1 - R^2$. Population vectors update iteratively via operator $\mathcal{M}$ across
+ACOR, AIW-PSO, standard HHO, or Dev-SCA. We include Dev-SCA alongside HHO because coupled
+trigonometric and arithmetic operators~\cite{abdulrab2023hybrid, devan2023novel, abdulrab2024energy}
+maintain step-size diversity and escape saddle points across non-convex parameter landscapes.
+All algorithmic routines and parameter bounds run within the MEALPY
+library~\cite{van2023mealpy,van2023groundwater,ahmed2021comprehensive}. Once the population
+converges, Stage-2 isolates the global optimum $\mathbf{x}^*$, benchmarking its out-of-sample
+test generalization directly against the manual baseline model.
 
 \section{Results}
 
@@ -454,58 +459,25 @@ for $\ce{CO2}$ in under 20 epochs.
 
 \subsection{Discussion}
 
-The performance of the two models on the target variables were evaluated using equations obtained in
-Sections~\ref{sec:co(-_2-)-modelling} and~\ref{sec:nox-modelling}. The ANN-HHO model demonstrated effective
-hyperparameter optimisation, resulting in a high performance regression model. It is important to note that the dataset
-used in this study is based on open-source OBD-II vehicle telemetry data~\cite{cephasax_obdii_ds3}
-and does not include actual sensor readings for either
-$ NO_x $ or $ CO_2 $. Instead, both target variables were derived using mathematical models applied to OBD-II data.
-The observed performance improvements might vary accordingly on the nature and quality of the data being used. The lack
-of direct sensor measurements introduces a key limitation in the validity of the regression results. While modelled
-estimates provide a viable approximation, they inherently lack the resolution and accuracy of real-world sensor outputs.
-For $ NO_x $ in particular, the absence of an actual sensor exacerbates issues related to skewed data distributions
-and the presence of outliers. Integrating genuine $ NO_x $ sensors into the data collection pipeline would greatly
-improve the fidelity of the dataset, enabling more reliable training and evaluation of machine learning models.
-Moreover, certain data fields within the original dataset may be skewed, potentially contributing to underfitting in the
-$ NO_x $ predictions. Furthermore, equation~\eqref{eqn:nox-estimate} was derived from the formation rate of Nitrogen
-Oxides $ NO_x $, which may introduce inaccuracies for representing the actual emissions data for $ NO_x $. Despite
-the limitations, the experimental approach presented in this experiment can be adapted to other domains requiring
-predictive modelling and optimisation based training strategies.
+The usage of metaheuristic algorithms highlights the limitations of manual hyperparameter tuning in
+a non-linear dataset. Since both target variables were computed according to the equations in
+Sections~\ref{sec:co(-_2-)-modelling} and~\ref{sec:nox-modelling}, we could deduce that the model
+converged for the mathematical approximations of both target variables. More specifically,
+$\ce{NO_x}$ approximations include the Boltzmann factor which makes it harder to generalise in
+addition to the $\ce{CO2}$ approximation which is a quadratic computation over $VSP$. This is
+reflected clearly in Table~\ref{tab:master_benchmark} where the manual baseline model underfitted
+and overfitted simultaneously over the two targets.
 
-The instability observed in the $ R^2 $ scores for $ NO_x $ across different experiments can be primarily attributed
-to the statistical characteristics of the original dataset. Specifically, the distribution of the $ NO_x $ variable is
-highly skewed and contains a significant number of extreme outliers. This leads to inconsistent performance of the
-regression models, particularly when the evaluation metric is sensitive to deviations from the central tendency of the
-data. A closer inspection of the dataset reveals that the values for $ NO_x $ are not symmetrically distributed;
-rather, they are heavily concentrated around lower magnitudes, while a few samples exhibit abnormally high emission
-levels. These outliers disproportionately influence the training process and evaluation metrics, often distorting the
-perceived performance of the model even when the underlying trend is correctly captured. The R-squared score, while
-useful in measuring goodness-of-fit, becomes less reliable under such conditions, making it difficult to fairly assess
-model performance across different experimental runs. Importantly, the issues stemming from the data distribution are
-not a consequence of the modelling methodology. Any attempt to normalize or transform the $ NO_x $ variable was found
-to degrade the statistical coherence of the dataset, as the variable is already close to being centered but still
-maintains a mean greater than zero. Further transformations would risk distorting the emission pattern or weakening the
-relationships encoded within the original feature set. Given these constraints, it was determined that retaining the raw
-distribution of $ NO_x $ was preferable to introducing artificial biases through aggressive preprocessing.
+In addition, Equation~\ref{eqn:nox-estimate} assumed four tunable coefficients $a,b,c,d$. However, it
+was assumed as $a=b=c=d=1$ in the experiments as a basis for the model since this paper aim to
+highlight the effectiveness of a hybrid ANN-Heuristic model, in which it can be assumed as a
+constant.
 
-Therefore, the variations in $ R^2 $ scores for $ NO_x $ should be interpreted with caution. While the ANN-HHO model
-still demonstrates strong performance overall, the presence of a non-ideal data distribution highlights the limitations
-inherent to open-source datasets. These findings reinforce the importance of robust data collection procedures and the
-potential impact of data quality on model evaluation, particularly in environmental prediction tasks involving naturally
-imbalanced phenomena like pollutant emissions.
-
-A similar observation can be made regarding the evaluation of $ CO_2 $ predictions. Although the model demonstrated a
-significant performance gain in terms of $ R^2 $ and reduction in loss, these improvements must also be considered
-within the context of how the target variable was derived. Since $ CO_2 $ values were generated from an estimation
-equation rather than obtained through direct measurement, the accuracy of the regression is inherently constrained by
-the fidelity of the underlying model used for generation. Moreover, estimation errors embedded in the original equation
-may have introduced subtle patterns in the dataset that the model was able to exploit, leading to artificially high
-performance indicators. This further reinforces the importance of using ground truth sensor data to validate results and
-confirm generalization capabilities. Despite this, the ANN-HHO model's consistent improvements over the baseline ANN
-across multiple runs support its reliability as an optimisation-based approach. However, these findings should be
-interpreted with the understanding that both $ CO_2 $ and $ NO_x $ values are, at their core, theoretical
-approximations. Future work involving actual sensor data would allow for a more comprehensive validation of the methods
-applied in this study and help eliminate ambiguities caused by the limitations of synthetic target generation.
+The proposed methodology could be applied to a wide range of engineering problems, primarily IC
+engine design as the main focus of this paper. The next generation of automotive vehicles have
+increasingly stringent emission rules to comply with. Aiding with the design process, critical
+emission targets could be mapped using approximation formulae and guardrail the design process
+before testing the physical prototype.
 
 \section{Conclusion and Future Works}
 
