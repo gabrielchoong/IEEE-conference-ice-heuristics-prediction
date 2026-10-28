@@ -6,12 +6,12 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{url}
+\usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage[version=4]{mhchem}
 \usepackage{siunitx}
 \usepackage{cite}
 \usepackage{microtype}
-
 \begin{document}
 
 \title{A hybrid ANN-HHO approach for ICE Emission Data Modelling}
@@ -29,18 +29,14 @@ Sepang, Selangor, Malaysia}
 
 \begin{abstract}
 	Road transportation remains a primary contributor to global greenhouse gas emissions, where
-	accurate Internal Combustion Engine (ICE) emission modeling is critical for powertrain
-	calibration. However, the multi-target prediction of Nitrogen Oxides ($\ce{NO_x}$) and Carbon
-	Dioxide ($\ce{CO2}$) involves severe physical trade-offs: $\ce{NO_x}$ kinetics follow exponential
-	Arrhenius sensitivity to peak temperature, producing heavy-tailed distribution bursts, whereas
-	$\ce{CO2}$ maps quadratically to vehicle specific power. Conventional manual calibration of Feedforward
-	Neural Networks fails under these opposing dynamics; human-tuned learning rate schedulers
-	(e.g., StepLR) overfit the smoother $\ce{CO2}$ trajectory while collapsing $\ce{NO_x}$ fidelity
+	thermodynamic limits inherent to Internal Combustion Engines (ICE) constrain efficiency and
+	complicate manual engine calibration. Although artificial neural networks can map non-linear
+	engine emissions, manual architecture design remains a costly trial-and-error process prone
 	to severe overfitting. In this study, we propose a hybrid Artificial Neural Network and Harris
 	Hawks Optimization (ANN-HHO) framework for multi-target vehicle emission modeling, predicting
-	$\ce{NO_x}$ and $\ce{CO2}$ simultaneously from OBD-II telemetry driving data. Our framework
-	employs a compute-restricted proxy objective ($E_{\text{proxy}} \le 20$ epochs) to prevent
-	premature weight memorization while discovering global optimal topologies and flat optimizers. The
+	mathematically estimated $\ce{NO_x}$ and $\ce{CO2}$ from OBD-II vehicle telemetry. The proposed
+	framework simultaneously optimizes network topology and training hyperparameters under both
+	unrestricted and compute-constrained regimes. Empirical results demonstrate that the proposed
 	unrestricted model (HHO-UR) achieves superior predictive fidelity with an $R^2$ of $0.9823$ for
 	$\ce{NO_x}$ and $0.9950$ for $\ce{CO2}$, decisively resolving the generalization failure observed
 	in the manual baseline model ($R^2 = 0.5714 \pm 0.2240$). Furthermore, under a restricted
@@ -49,9 +45,7 @@ Sepang, Selangor, Malaysia}
 	minutes. Comparative evaluation against alternative metaheuristics (PSO, ACOR, and SCA) confirms
 	that the HHO framework consistently discovers compact, generalizable two-layer topologies,
 	demonstrating a scalable and computationally efficient methodology for intelligent automotive engine management.
-
-	\keywords{Internal combustion engines \and Vehicle emission modeling \and Multi-target prediction
-	\and Artificial neural networks \and Harris Hawks optimization \and OBD-II telemetry.}
+	\keywords{Internal combustion engines \and Vehicle emission modeling \and Multi-target prediction \and Artificial neural networks \and Harris Hawks optimization \and OBD-II telemetry.}
 \end{abstract}
 
 \section{Introduction}
@@ -62,61 +56,30 @@ significant quantities of greenhouse gases responsible for global warming such a
 dioxide ($\ce{CO2}$), carbon monoxide ($\ce{CO}$) and sulphur dioxide ($\ce{SO2}$).
 
 The effectiveness of manual calibration of ICE systems is inherently limited by the thermodynamics of the combustion
-process. In passenger vehicles, the Engine Control Unit (ECU) manages fuel delivery, ignition timing, and air intake to
-balance three competing operational objectives: maximizing fuel economy, extracting peak power, and minimizing exhaust
-emissions. Due to the high degrees of non-linearity in in-cylinder chemical kinetics, dynamic engine operating
-conditions lead to transient emission spikes that fixed empirical lookup tables cannot dynamically mitigate.
+process \cite{weteringArtificialNeuralNetworkBased2023}. An ideal optimization objective in engine management is the
+simultaneous minimization of both $\ce{NO_x}$ and $\ce{CO2}$ emissions resulting from hydrocarbon combustion. However,
+these two target pollutants exhibit a fundamental thermodynamic Pareto trade-off governed by in-cylinder operating
+temperatures. Higher combustion temperatures promote more complete fuel oxidation, thereby maximizing thermal efficiency
+and reducing specific fuel consumption alongside $\ce{CO2}$ emissions. Conversely, these elevated temperatures provide
+the activation energy required for the thermal fixation of atmospheric nitrogen into nitrogen oxides ($\ce{NO_x}$) via
+the Zeldovich mechanism, while accelerating the thermal decomposition of nitrogen dioxide ($\ce{NO2}$) into toxic
+nitrogen monoxide ($\ce{NO}$) \cite{nitrogenDioxideThermalDecomposition}. This opposing physical relationship makes
+concurrent emission reduction highly non-linear and difficult to navigate through traditional heuristics.
 
-Recent advancements in computing power and algorithmic design enabled the integration of Artificial Intelligence (AI)
-technologies into automotive powertrains. Data-driven models, such as Artificial Neural Networks (ANNs), have shown
-exceptional capability in learning complex, non-linear relationships across high-dimensional input spaces without
-requiring closed-form physical calibrations. In particular, ANNs have been increasingly adopted to model physical engine
-characteristics, replacing computationally expensive Fluid Dynamics (CFD) simulations and costly physical dynamometer
-testing. Neural network architectures have demonstrated high fidelity in approximating emissions, with applications
-ranging from predictive emissions monitoring systems (PEMS) to real-time engine control
-\cite{weteringArtificialNeuralNetworkBased2023, nitrogenDioxideThermalDecomposition,
-modelingNonlinearRelationships}.
+Manual calibration of the thermodynamics of an IC Engine remain costly and time consuming. Machine learning (ML) methods
+such as artificial neural networks (ANN) offer a powerful alternative to map out the relationships of several crucial
+factors of the system. The modern ICE system generates complex and non-linear telemetry data via the standardized
+On-Board Diagnostics II (OBD-II) architecture. Since ANNs excel at mapping cross-domain, multi-dimentional, non-linear
+relationships\cite{modelingNonlinearRelationships}, they are well suited to model the emission outputs.
 
-Despite these promising applications, training ANNs for multi-target vehicle emission modeling introduces significant
-mathematical hurdles. The emission of $\ce{NO_x}$ and $\ce{CO2}$ operate on radically different physical mechanisms:
-while $\ce{CO2}$ is primarily a function of fuel consumption and vehicle specific power, $\ce{NO_x}$ formation is
-exponentially sensitive to peak combustion temperatures and local oxygen concentrations via the thermal Zeldovich
-mechanism. When optimizing a shared neural network representation, standard backpropagation struggles to escape local
-extrema, often sacrificing the prediction fidelity of one pollutant to minimize the loss of another. Furthermore,
-manual hyperparameter tuning of these networks is prone to human bias, frequently yielding oversized architectures that
-suffer from severe overfitting or excessive computational latency incompatible with embedded ECU deployment.
-
-To address these challenges, this study proposes a hybrid Artificial Neural Network and Harris Hawks Optimization
-(ANN-HHO) framework for multi-target vehicle emission modeling. By integrating nature-inspired metaheuristic search into
-the architectural design and hyperparameter selection process, the proposed framework automates the discovery of
-optimal network topologies, learning dynamics, and regularization schemes. The primary contributions of this work are
-threefold:
-\begin{enumerate}
-	\item We develop a unified multi-target prediction pipeline that models $\ce{NO_x}$ and $\ce{CO2}$ emissions
-		simultaneously using vehicle on-board diagnostics (OBD-II) telemetry, demonstrating that nature-inspired heuristics
-		effectively resolve the multi-objective optimization tension between chemically divergent pollutants.
-	\item We introduce an epoch-constrained proxy evaluation strategy within the metaheuristic search loop, enabling the
-		rapid exploration of the hyperparameter space while preventing the optimization algorithm from converging toward
-		over-parameterized models that exhibit memorization.
-	\item We benchmark the proposed HHO-optimized framework against both a manually tuned baseline and multiple
-		state-of-the-art metaheuristic algorithms (Particle Swarm Optimization, Ant Colony Optimization for Continuous
-		Domains, and the Sine Cosine Algorithm), providing a rigorous empirical evaluation of predictive accuracy, model
-		compactness, and search convergence efficiency.
-\end{enumerate}
+The remainder of this paper is organized as follows: Section II reviews the existing literature; Section III details the
+proposed methodology; Section IV compares the results of the proposed methodology with current approaches; Section V
+concludes the findings of this paper.
 
 \section{Related Works}
 
-The integration of artificial intelligence and machine learning into internal combustion engine modeling has seen
-rapid expansion over the past decade. Traditional phenomenological and zero-dimensional thermodynamic models, while
-computationally lightweight, often lack the precision required for transient emission estimation. Conversely,
-three-dimensional computational fluid dynamics (CFD) simulations offer high physical fidelity but are prohibitively
-expensive for real-time engine calibration or iterative design space exploration. Data-driven surrogate models have
-emerged as a viable middle ground, offering near-instantaneous inference with minimal accuracy loss.
-
-Artificial Neural Networks (ANNs) have been widely deployed to predict critical engine performance metrics, including
-thermal efficiency, brake torque, and specific fuel consumption, alongside exhaust emissions across varying fuel
-blends and engine load cycles \cite{bhattApplicationArtificialNeural2022, tuanhoangReviewApplicationArtificial2021}.
 Recent efforts in ICE optimization for lowering emissions leveraging ANNs have proven to reduce developmental time and
+costs \cite{bhattApplicationArtificialNeural2022, tuanhoangReviewApplicationArtificial2021} due to the adaptability and
 flexibility of these neural networks \cite{karunamurthyPredictionICEngine2023,
 inezahavugimanaReviewArtificialIntelligent2023}. Several studies confirmed the reliability of pairing an ANN with
 optimization algorithms to design a mathematically optimal network architecture
@@ -146,42 +109,64 @@ relatively high accuracy. Nitrogen Oxide ($\ce{NO}$) has a formation rate \cite{
 	\cdot [N_2] \cdot \frac{[O]}{[O]\textsubscript{eq}} \cdot e^{\frac{-134.7}{RT}}
 	\label{eqn:no-rate}
 \end{equation}
-where $T$ is temperature [K], $[O]\textsubscript{eq}$ equilibrium atomic oxygen concentration, and
-$R$ is the ideal gas constant [J/mol$ \cdot $K].
+where:
+\begin{itemize}
+	\item $T$ is temperature [K],
+	\item $[O]\textsubscript{eq}$ equilibrium atomic oxygen concentration, and
+	\item $R$ is the ideal gas constant [J/mol$ \cdot $K] .
+\end{itemize}
 From \eqref{eqn:no-rate},
 \begin{equation}
 	\ce{NO_x} = \int_{0}^{t} f(T, [\ce{O_2}], [\ce{N_2}], [O], [O]\textsubscript{eq}) \quad dt
 	\label{eqn:nox-integral}
 \end{equation}
-The combustion process of the IC Engine that releases $\ce{NO_x}$ consists of Nitrogen Dioxide ($\ce{NO2}$) and
-Nitrogen Monoxide ($\ce{NO}$). $\ce{NO2}$ can be assumed to decay into $\ce{NO}$ via thermal decomposition:
+
+Under high temperatures, thermal equilibrium favours the formation of $\ce{NO}$ due to the thermal decomposition of
+nitrogen dioxide ($\ce{NO_2}$), which initiates from \SI{150}{\degreeCelsius} at atmospheric pressure
+\cite{nitrogenDioxideThermalDecomposition}:
+
 \begin{equation}
-	2\ce{NO2} \rightarrow 2\ce{NO} + \ce{O2}
-	\label{eq:no2tono}
+	\ce{2NO2(g) ->[\SI{150}{\degreeCelsius}][1 a.t.m] 2NO(g) + O2(g)}\label{eq:no2tono}
 \end{equation}
-The generation of $\ce{NO_x}$ emission from an IC engine can then be estimated by:
+
+When exhaust gases escape the combustion chamber into lower-temperature exhaust manifolds, thermal energy is released
+and the chemical equilibrium shifts back towards $\ce{NO_2}$. In this modeling framework, the collective mixture of
+these oxides is denoted by $\ce{NO_x}$ in \eqref{eqn:nox-integral}.
+
+To achieve a suitable approximation, $\ce{NO_x}$ emissions are approximated using the equation below
+
 \begin{equation}
-	\ce{NO_x} \approx a \cdot \text{RPM} + b \cdot \text{LOAD} + c \cdot \text{COOLANT\_TEMP} + d \cdot \text{IAT}
-	\label{eqn:nox-estimate}
+	NO_x{est} = a \cdot \text{AFR}^b \cdot T_{intake}^c \cdot
+	\text{RPM}^d \cdot e^{\frac{-E_a}{RT}}. \label{eqn:nox-estimate}
 \end{equation}
+
+Equation \eqref{eqn:nox-estimate} serves as an estimation for the actual $\ce{NO_x}$ emission values,
+where coefficients $a,b,c,d$ are tunable during regression. This equation simplifies \eqref{eqn:nox-integral}
+where $[\ce{N_2}], [\ce{O_2}], [\ce{O}], [\ce{O}]\textsubscript{eq}$ are related to AFR and RPM since AFR
+is the ratio between air and fuel, where air is composed of mostly Nitrogen and Oxygen. The intake temperature
+$T_{intake}$ remains from the previous equation, and $E_a$ can be assumed as 134.7.
 
 \subsection{Carbon Dioxide $\ce{CO2}$ Approximation}\label{sec:co(-_2-)-modelling}
 
-Vehicle Specific Power (VSP) represents the instantaneous power demand of the engine per unit of vehicle mass.
-VSP is calculated as:
-\begin{equation}
-	\text{VSP} = v \cdot (1.1 \cdot a + 9.81 \cdot \text{grade} + 0.132) + 0.000302 \cdot v^3
-	\label{eq:vsp}
-\end{equation}
-where $v$ is vehicle speed (m/s), $a$ is vehicle acceleration ($\text{m/s}^2$), and $\text{grade}$ is the road gradient
-in percentage. Since driving on flat roads is assumed, $\text{grade} = 0$.
+$\ce{CO2}$ closely relates to the Vehicle Specific Power (VSP) in IC Engines. The formula of VSP is given by
 
-$\ce{CO2}$ emission is closely related to fuel consumption and engine load. An empirical model correlates VSP with
-$\ce{CO2}$ emission rate \cite{CHEN2024133892}:
 \begin{equation}
-	\ce{CO2} = 0.00995 \cdot \text{VSP}^2 + 0.2573 \cdot \text{VSP} + 1.443
-	\label{eqn:co2_and_vsp}
+	VSP = v(1.1a + 9.18grade + 0.132) + 0.000302v^3 \label{eq:vsp}
 \end{equation}
+where:
+\begin{itemize}
+	\item $v$ is the vehicle speed [m/s],
+	\item $a$ is the vehicle acceleration [m/s\textsuperscript{2}], and
+	\item $grade$ is the landform slope [-].
+\end{itemize}
+
+$\ce{CO2}$ can be approximated with VSP values by \eqref{eqn:co2_and_vsp} \cite{CHEN2024133892}.
+
+\begin{equation}
+	f(VSP) = 0.00995 \cdot VSP^2 + 0.2573 \cdot VSP + 1.443 \label{eqn:co2_and_vsp}
+\end{equation}
+
+\subsection{Proposed ANN-Metaheuristic Framework}
 
 \begin{algorithm}[t]
 	\caption{Proposed Metaheuristic Neural Architecture and Hyperparameter Optimization}
@@ -230,8 +215,6 @@ $\ce{CO2}$ emission rate \cite{CHEN2024133892}:
 	\end{algorithmic}
 \end{algorithm}
 
-\subsection{Two-Stage Metaheuristic Neural Architecture Search}
-
 The proposed optimization framework operates on a Two-Stage Neural Architecture Search (NAS)
 paradigm, formalized in Algorithm~\ref{alg:metaheuristic_optimization}. Rather than evaluating
 arbitrarily deep network topologies over exhaustive training cycles, the continuous search vector
@@ -266,7 +249,7 @@ overhead across all evaluated models.
 	\centering
 	\caption{Comprehensive Performance and Computational Comparison: Manual Baseline vs. Metaheuristic-Optimised Models}
 	\label{tab:master_benchmark}
-	\setlength{\tabcolsep}{3.5pt}
+	\setlength{\tabcolsep}{4.5pt}
 	\resizebox{\textwidth}{!}{%
 		\begin{tabular}{lccccccc}
 			\hline
@@ -306,7 +289,7 @@ $\ce{CO2}$ in only 15 epochs.
 	\centering
 	\caption{Metaheuristic Optimization Benchmark under Restricted Training Regime ($\le 20$ Epochs)}
 	\label{tab:metaheuristic_benchmark}
-	\setlength{\tabcolsep}{5pt}
+	\setlength{\tabcolsep}{3pt}
 	\resizebox{0.95\textwidth}{!}{%
 		\begin{tabular}{lcccc}
 			\hline
@@ -372,7 +355,7 @@ limited training at $568$ by epoch 20.
 	\centering
 	\caption{Performance and Computational Comparison: Baseline vs. Restricted and Unrestricted HHO}
 	\label{tab:hho_comparison}
-	\setlength{\tabcolsep}{4pt}
+	\setlength{\tabcolsep}{3pt}
 	\resizebox{0.95\textwidth}{!}{%
 		\begin{tabular}{lccc}
 			\hline
@@ -394,49 +377,42 @@ limited training at $568$ by epoch 20.
 	}
 \end{table}
 
-Figure~\ref{fig:loss_convergence_comparison}(b) highlights the fundamental behavioral divide across the extended
-150-epoch horizon, comparing HHO-UR against the manual baseline model across five independent trials. The manual
-baseline displays distinct loss drop-offs at epoch 30 and epoch 60, corresponding exactly to scheduled StepLR
-learning-rate decays ($\gamma = 0.1$). Although these step decays drive the final training MSE down
-to $97.12 \pm 25.01$,
-they force the optimizer into narrow, non-generalizable minima. Consequently, test-set evaluation reveals severe
-overfitting on the non-linear $\ce{NO_x}$ target ($R^2 = 0.5714 \pm 0.2240$, with individual runs dropping as low as
-$0.3117$).
+Figure~\ref{fig:loss_convergence_comparison}(b) contextualizes these dynamics over an extended
+150-epoch horizon, comparing HHO-UR against the manual baseline model across five independent trials
+(plotted with a $\pm 1\sigma$ variance band). As quantified in Table~\ref{tab:hho_comparison},
+HHO-R achieved comparable predictive accuracy to HHO-UR while consuming only $11.3\%$ of the epoch
+budget (17 versus 150 epochs), reducing search wall-clock duration by $86\%$ ($1\text{h
+}16\text{m}$ versus $9\text{h }04\text{m}$). The vertical threshold at Epoch 20 in
+Figure~\ref{fig:loss_convergence_comparison}(b) highlights that subsequent training epochs yield
+sharply diminishing returns, establishing that extensive training horizons during hyperparameter
+optimization are largely superfluous.
 
-In contrast, HHO-UR maintained smooth, continuous loss progression without artificial learning-rate shocks. While its
-final MSE appears higher on training curves ($514.35$), it achieved superior out-of-sample generalization across both
-targets ($R^2 = 0.9823$ for $\ce{NO_x}$ and $0.9950$ for $\ce{CO2}$). Furthermore, as detailed in
-Table~\ref{tab:hho_comparison}, the compute-constrained HHO-R variant discovered a lean two-layer topology ($[138,
-256]$) that converged in just 17 epochs (76.1 minutes), capturing $94.9\%$ of HHO-UR's $\ce{NO_x}$ performance while
-slashing training epoch overhead by $88.7\%$.
+\subsection{Architectural Convergence and Overfitting Analysis}
 
-\subsection{Architectural Regularization: Shallow-Wide vs. Deep-Narrow Topologies}
+Despite the unbounded search space permitting topologies between 1
+and 5 hidden layers, all four restricted algorithms independently converged on shallow, wide
+configurations consisting of exactly two hidden layers ($[205, 256]$ for ACOR, $[242, 125]$ for
+PSO, $[138, 256]$ for HHO, and $[94, 202]$ for SCA). The widened first hidden layer ($> 94$ units,
+expanding up to 242) provides an expressive initial non-linear projection for the raw telemetry
+features, while avoiding the gradient degradation and slow propagation typical of deeper
+architectures under restricted training horizons.
 
-A key qualitative insight from the optimization benchmarks is the structural morphology of the discovered networks.
-Across all four metaheuristic algorithms, the search consistently converged on shallow-wide representations (two hidden
-layers: $[205, 256]$ for ACOR, $[242, 125]$ for PSO, $[138, 256]$ for HHO, and $[94, 202]$ for SCA). The widened first
-hidden layer ($> 94$ units, scaling up to 242 units in PSO) acts as a high-dimensional feature expansion mechanism,
-allowing the network to disentangle linear vehicle kinetics ($\ce{CO2}$) from the severe non-linearities of thermal
-formation ($\ce{NO_x}$) before projection into the secondary layer.
+This architectural property directly explains the failure mode of the manual baseline model. As
+depicted in Figure~\ref{fig:loss_convergence_comparison}(b), the manual baseline's training loss
+plummets from $18,000$ to $52.1 \pm 14.8$ (reaching as low as $31.8$ at Epoch 150). However, this
+apparent convergence is a pathology of premature learning rate decay. The baseline utilized a
+StepLR scheduler that decayed the learning rate by a factor of 10 at Epoch 30 and again at Epoch
+60. These step drops artificially suppressed the training error by trapping the network weights in
+a narrow local basin of the loss landscape, halting gradient-driven exploration. Consequently, the
+network memorised training noise, yielding an artificially suppressed training MSE while failing to
+generalise to the non-linear thermal formation kinetics of $\ce{NO_x}$ on unseen telemetry (where
+test loss stalled at $97.12 \pm 25.01$ and $R^2$ collapsed to $0.5714$).
 
-Conversely, deeper architectures evaluated during unrestricted search (such as HHO-UR's five-layer $[175, 211, 220,
-242, 21]$ configuration) yielded only marginal improvements in $R^2$ ($+0.0496$ on $\ce{NO_x}$) at the expense of a
-$5.7\times$ increase in parameter volume and an exponential increase in training wall-clock time. This demonstrates that
-for tabular OBD-II telemetry streams, over-parameterized deep architectures provide diminishing returns over well-tuned
-two-layer wide networks.
-
-\subsection{Hyperparameter Sensitivity: Flat vs. Decaying Learning Rate Schedules}
-
-The experimental findings underscore the critical role of optimization dynamics over raw layer depth. The manual
-baseline model utilized a StepLR scheduler that decayed the learning rate from $10^{-2}$ to $10^{-4}$ across 150
-epochs. While this produced a deceptive drop in training loss, the rapid decay restricted parameter mobility before the
-network could escape local saddles in the $\ce{NO_x}$ error surface, inducing severe generalization collapse (test $R^2$
-stalled at $0.5714$).
-
-In contrast, the metaheuristically discovered models employed adaptive, flat optimizers (Adam, Nadam, RMSprop) without
-aggressive scheduler decay, coupled with wider hidden layer representations. This allowed the models to escape shallow
-local extrema and converge toward flatter, generalizable minima, securing test $R^2$ scores above $0.93$ for $\ce{NO_x}$
-and $0.99$ for $\ce{CO2}$ in under 20 epochs.
+In contrast, the metaheuristically discovered models employed adaptive, flat optimisers (Adam,
+Nadam, RMSprop) without aggressive scheduler decay, coupled with wider hidden layer
+representations. This allowed the models to escape shallow local extrema and converge toward
+flatter, generalisable minima, securing test $R^2$ scores above $0.93$ for $\ce{NO_x}$ and $0.99$
+for $\ce{CO2}$ in under 20 epochs.
 
 \subsection{Discussion}
 

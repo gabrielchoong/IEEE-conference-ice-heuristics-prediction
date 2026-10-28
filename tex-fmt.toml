@@ -1,0 +1,16 @@
+# tex-fmt.toml
+check = false
+print = false
+fail-on-change = false
+wrap = true
+wraplen = 120
+wrapmin = 100
+tabsize = 1
+tabchar = "tab"
+format-tables = false
+stdin = false
+lists = []
+verbatims = []
+no-indent-envs = []
+wrap-chars = []
+verbosity = "warn"
