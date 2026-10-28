@@ -20,7 +20,7 @@ jobs:
       - name: Upload PDF to Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: latest
-          name: Nightly
+          tag_name: ieee
+          name: IEEE
           files: main.pdf
           fail_on_unmatched_files: true
